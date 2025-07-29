@@ -6,47 +6,59 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Users, GraduationCap } from 'lucide-react';
+import { Users, GraduationCap, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('');
-  const { login, isLoading } = useAuth();
+const Signup = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: ''
+  });
+  const { signup, isLoading } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!role) {
+    if (formData.password !== formData.confirmPassword) {
       toast({
-        title: "Role required",
-        description: "Please select your role to continue.",
+        title: "Password mismatch",
+        description: "Passwords do not match. Please try again.",
         variant: "destructive",
       });
       return;
     }
-    
-    const success = await login(email, password, role as 'hr_admin' | 'mentor');
+
+    if (!formData.role) {
+      toast({
+        title: "Role required",
+        description: "Please select a role to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const success = await signup(formData.name, formData.email, formData.password, formData.role as 'hr_admin' | 'mentor');
     if (success) {
       toast({
-        title: "Welcome back!",
-        description: "Successfully logged in to HR Training Module",
+        title: "Account created!",
+        description: "Successfully registered to HR Training Module",
       });
     } else {
       toast({
-        title: "Login failed",
-        description: "Invalid credentials or role mismatch. Please try again.",
+        title: "Registration failed",
+        description: "Email already exists or invalid data. Please try again.",
         variant: "destructive",
       });
     }
   };
 
-  const demoCredentials = [
-    { role: 'HR Admin', email: 'hr@company.com', icon: Users },
-    { role: 'Mentor', email: 'mentor1@company.com', icon: GraduationCap },
-  ];
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -54,34 +66,45 @@ const Login = () => {
         <div className="text-center">
           <div className="flex justify-center mb-4">
             <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-              <GraduationCap className="w-8 h-8 text-primary-foreground" />
+              <UserPlus className="w-8 h-8 text-primary-foreground" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-foreground">HR Training Module</h1>
-          <p className="text-muted-foreground mt-2">Manage internships with ease</p>
+          <h1 className="text-3xl font-bold text-foreground">Join HR Training Module</h1>
+          <p className="text-muted-foreground mt-2">Create your account to get started</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Sign In</CardTitle>
-            <CardDescription>Enter your credentials to access the dashboard</CardDescription>
+            <CardTitle>Sign Up</CardTitle>
+            <CardDescription>Create a new account with your role</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  required
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
                   required
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
-                <Select value={role} onValueChange={setRole}>
+                <Select value={formData.role} onValueChange={(value) => handleInputChange('role', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select your role" />
                   </SelectTrigger>
@@ -106,58 +129,36 @@ const Login = () => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create a password"
+                  value={formData.password}
+                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Confirm your password"
+                  value={formData.confirmPassword}
+                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                   required
                 />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Signing in...' : 'Sign In'}
+                {isLoading ? 'Creating Account...' : 'Create Account'}
               </Button>
             </form>
             
             <div className="mt-4 text-center">
               <p className="text-sm text-muted-foreground">
-                Don't have an account?{' '}
-                <Link to="/signup" className="text-primary hover:underline font-medium">
-                  Sign up here
+                Already have an account?{' '}
+                <Link to="/login" className="text-primary hover:underline font-medium">
+                  Sign in here
                 </Link>
               </p>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Demo Credentials</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {demoCredentials.map((cred) => (
-              <div key={cred.role} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <cred.icon className="w-4 h-4 text-primary" />
-                  <div>
-                    <p className="font-medium text-sm">{cred.role}</p>
-                    <p className="text-xs text-muted-foreground">{cred.email}</p>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setEmail(cred.email);
-                    setPassword('password123');
-                    setRole(cred.role === 'HR Admin' ? 'hr_admin' : 'mentor');
-                  }}
-                >
-                  Use
-                </Button>
-              </div>
-            ))}
-            <p className="text-xs text-muted-foreground text-center">
-              Password for all demo accounts: <code className="bg-muted px-1 rounded">password123</code>
-            </p>
           </CardContent>
         </Card>
       </div>
@@ -165,4 +166,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Signup;

@@ -3,7 +3,8 @@ import { User } from '@/types';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string, role: 'hr_admin' | 'mentor') => Promise<boolean>;
+  signup: (name: string, email: string, password: string, role: 'hr_admin' | 'mentor') => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -45,13 +46,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string, role: 'hr_admin' | 'mentor'): Promise<boolean> => {
     setIsLoading(true);
     
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    const foundUser = mockUsers.find(u => u.email === email);
+    const foundUser = mockUsers.find(u => u.email === email && u.role === role);
     if (foundUser && password === 'password123') {
       setUser(foundUser);
       localStorage.setItem('hrTrainingUser', JSON.stringify(foundUser));
@@ -63,13 +64,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return false;
   };
 
+  const signup = async (name: string, email: string, password: string, role: 'hr_admin' | 'mentor'): Promise<boolean> => {
+    setIsLoading(true);
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Check if email already exists
+    const existingUser = mockUsers.find(u => u.email === email);
+    if (existingUser) {
+      setIsLoading(false);
+      return false;
+    }
+    
+    // Create new user
+    const newUser: User = {
+      id: (mockUsers.length + 1).toString(),
+      name,
+      email,
+      role
+    };
+    
+    mockUsers.push(newUser);
+    setUser(newUser);
+    localStorage.setItem('hrTrainingUser', JSON.stringify(newUser));
+    setIsLoading(false);
+    return true;
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('hrTrainingUser');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
